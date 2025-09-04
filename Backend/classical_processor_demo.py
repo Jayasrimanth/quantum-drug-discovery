@@ -178,7 +178,6 @@ def create_interactive_3d_visualization(filename: str, title: str, molecule_data
     <body>
         <div class="header">
             <h1>{title}</h1>
-            <p>File: {filename}</p>
             <p>Interactive 3D Molecular Structure</p>
         </div>
         
@@ -554,7 +553,7 @@ def process_classical(file_paths: List[str]) -> Tuple[Dict, Dict]:
             }
             
             # Generate interactive 3D visualization
-            visualization_html = create_interactive_3d_visualization(filename, f"Classical: {filename}", molecule_info)
+            visualization_html = create_interactive_3d_visualization(filename, "Classical Analysis", molecule_info)
             
             classical_time = time.time() - start_time
             

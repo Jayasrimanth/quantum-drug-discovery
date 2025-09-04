@@ -114,7 +114,7 @@ export const QuantumResults: React.FC<QuantumResultsProps> = ({ results }) => {
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg flex items-center space-x-2">
                 <FileText className="w-5 h-5" />
-                <span>{filename}</span>
+                <span>{type.charAt(0).toUpperCase() + type.slice(1)} Analysis</span>
               </CardTitle>
               <Badge variant={result.success ? "default" : "destructive"}>
                 {result.success ? "Success" : "Failed"}
@@ -182,7 +182,7 @@ export const QuantumResults: React.FC<QuantumResultsProps> = ({ results }) => {
                 {/* Visualization Button */}
                 {result.visualization && (
                   <Button
-                    variant="outline"
+                    variant="quantum"
                     size="sm"
                     onClick={() =>
                       openVisualization(
@@ -308,18 +308,18 @@ export const QuantumResults: React.FC<QuantumResultsProps> = ({ results }) => {
           {hasClassical && (
             <TabsTrigger
               value="classical"
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-2 data-[state=active]:bg-muted/50 data-[state=active]:text-muted-foreground data-[state=inactive]:bg-gradient-to-r data-[state=inactive]:from-blue-500/20 data-[state=inactive]:to-purple-500/20 data-[state=inactive]:text-blue-200 data-[state=inactive]:font-semibold hover:from-blue-500/30 hover:to-purple-500/30 border-blue-500/50"
             >
-              <Zap className="w-4 h-4" />
+              <Zap className="w-4 h-4 data-[state=active]:text-muted-foreground data-[state=inactive]:text-blue-400" />
               <span>Classical Results</span>
             </TabsTrigger>
           )}
           {hasQuantum && (
             <TabsTrigger
               value="quantum"
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-2 data-[state=active]:bg-muted/50 data-[state=active]:text-muted-foreground data-[state=inactive]:bg-gradient-to-r data-[state=inactive]:from-purple-500/20 data-[state=inactive]:to-pink-500/20 data-[state=inactive]:text-purple-200 data-[state=inactive]:font-semibold hover:from-purple-500/30 hover:to-pink-500/30 border-purple-500/50"
             >
-              <Target className="w-4 h-4" />
+              <Target className="w-4 h-4 data-[state=active]:text-muted-foreground data-[state=inactive]:text-purple-400" />
               <span>Quantum Results</span>
             </TabsTrigger>
           )}

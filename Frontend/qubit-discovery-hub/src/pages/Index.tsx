@@ -3,6 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileUpload } from "@/components/FileUpload";
 import { QuantumResults } from "@/components/QuantumResults";
+import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
+import { supabase } from "@/supabaseClient";
 import {
   Atom,
   Zap,
@@ -11,6 +14,8 @@ import {
   ChevronRight,
   Sparkles,
   Loader2,
+  User,
+  LogOut,
 } from "lucide-react";
 import quantumHero from "@/assets/quantum-hero.jpg";
 import molecularNetwork from "@/assets/molecular-network.jpg";
@@ -22,6 +27,24 @@ const Index = () => {
   const [showUpload, setShowUpload] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showApproachSelection, setShowApproachSelection] = useState(false);
+  const [selectedOperationType, setSelectedOperationType] = useState<'classical' | 'quantum' | 'hybrid'>('classical');
+  const { user, signOut, profile, loading, updatePoints } = useAuth();
+
+  // Handle email confirmation redirect
+  React.useEffect(() => {
+    const handleAuthCallback = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (data.session && data.session.user.email_confirmed_at) {
+        toast.success("Email confirmed successfully! Welcome to Qpharma!");
+      }
+    };
+
+    // Check if this is a callback from email confirmation
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('type') === 'signup' || urlParams.get('token_hash')) {
+      handleAuthCallback();
+    }
+  }, []);
 
   const handleFileUpload = async (file: File) => {
     setSelectedFile(file);
@@ -33,6 +56,30 @@ const Index = () => {
     approach: "classical" | "quantum" | "both"
   ) => {
     if (!selectedFile) return;
+
+    // Define point costs
+    const POINTS_COST = {
+      classical: 20,
+      quantum: 35,
+      both: 50, // hybrid approach
+    };
+
+    const cost = POINTS_COST[approach];
+    
+    if (!profile) {
+      toast.error("Please wait for your profile to load.");
+      return;
+    }
+    
+    if (profile.token_points < cost) {
+      toast.error(`Insufficient points for this analysis. You need ${cost} points but only have ${profile.token_points}.`);
+      return;
+    }
+
+    // Deduct points
+    const newPoints = profile.token_points - cost;
+    updatePoints(newPoints);
+    toast.success(`${cost} points deducted. Remaining: ${newPoints}`);
 
     setIsAnalyzing(true);
     toast.info(`Starting ${approach} analysis...`);
@@ -143,11 +190,14 @@ const Index = () => {
             </p>
           </div>
 
-          <FileUpload
-            onFileUpload={handleFileUpload}
-            isLoading={isAnalyzing}
-            acceptedTypes=".mol2"
-          />
+          {!showApproachSelection && (
+            <FileUpload
+              onFileUpload={handleFileUpload}
+              isLoading={isAnalyzing}
+              acceptedTypes=".mol2"
+              operationType={selectedOperationType}
+            />
+          )}
 
           {/* Approach Selection Modal */}
           {showApproachSelection && selectedFile && (
@@ -163,7 +213,10 @@ const Index = () => {
 
                   <div className="space-y-4">
                     <Button
-                      onClick={() => handleApproachSelection("classical")}
+                      onClick={() => {
+                        setSelectedOperationType("classical");
+                        handleApproachSelection("classical");
+                      }}
                       disabled={isAnalyzing}
                       variant="outline"
                       size="lg"
@@ -172,13 +225,16 @@ const Index = () => {
                       <div className="text-left">
                         <div className="font-semibold">Classical Approach</div>
                         <div className="text-sm text-muted-foreground">
-                          Traditional computational methods
+                          Traditional computational methods (20 points)
                         </div>
                       </div>
                     </Button>
 
                     <Button
-                      onClick={() => handleApproachSelection("quantum")}
+                      onClick={() => {
+                        setSelectedOperationType("quantum");
+                        handleApproachSelection("quantum");
+                      }}
                       disabled={isAnalyzing}
                       variant="quantum"
                       size="lg"
@@ -187,13 +243,16 @@ const Index = () => {
                       <div className="text-left">
                         <div className="font-semibold">Quantum Approach</div>
                         <div className="text-sm opacity-90">
-                          Advanced quantum computing
+                          Advanced quantum computing (35 points)
                         </div>
                       </div>
                     </Button>
 
                     <Button
-                      onClick={() => handleApproachSelection("both")}
+                      onClick={() => {
+                        setSelectedOperationType("hybrid");
+                        handleApproachSelection("both");
+                      }}
                       disabled={isAnalyzing}
                       variant="quantum"
                       size="lg"
@@ -206,9 +265,9 @@ const Index = () => {
                         </>
                       ) : (
                         <div className="text-left">
-                          <div className="font-semibold">Both Approaches</div>
+                          <div className="font-semibold">Hybrid Analysis</div>
                           <div className="text-sm opacity-90">
-                            Compare classical vs quantum
+                            Compare classical vs quantum (50 points)
                           </div>
                         </div>
                       )}
@@ -234,8 +293,67 @@ const Index = () => {
     );
   }
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success("Signed out successfully");
+    } catch (error) {
+      toast.error("Failed to sign out");
+    }
+  };
+
   return (
     <main className="min-h-screen bg-gradient-hero">
+      {/* Header Navigation */}
+      <header className="relative z-10 border-b border-border/20 bg-background/10 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Atom className="w-8 h-8 text-primary" />
+              <span className="text-2xl font-bold bg-gradient-quantum bg-clip-text text-transparent">
+                Qpharma
+              </span>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              {user ? (
+                <>
+                  {profile && (
+                    <div className="flex items-center space-x-2 text-sm">
+                      <span className="text-muted-foreground">Points:</span>
+                      <span className="font-semibold text-molecular-green">
+                        {profile.token_points}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                    <User className="w-4 h-4" />
+                    <span>{user.email}</span>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </Button>
+                </>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <Link to="/signin">
+                    <Button variant="ghost" size="sm">
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Link to="/signup">
+                    <Button variant="quantum" size="sm">
+                      Sign Up
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </header>
+
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div

@@ -202,7 +202,6 @@ def create_interactive_3d_visualization(filename: str, title: str, molecule_data
     <body>
         <div class="header">
             <h1>{title}</h1>
-            <p>File: {filename}</p>
             <p>Quantum 3D Molecular Structure</p>
         </div>
         
@@ -652,7 +651,7 @@ def process_quantum(file_paths: List[str]) -> Tuple[Dict, Dict]:
             # Generate interactive 3D visualization
             visualization_html = create_interactive_3d_visualization(
                 filename, 
-                f"Quantum: {filename}",
+                "Quantum Analysis",
                 {
                     'num_atoms': mock_atom_count,
                     'num_bonds': mock_bond_count,

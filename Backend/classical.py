@@ -42,6 +42,7 @@ for mol2_filename in mol2_filenames:
     # Classical Simulation: Start Timing
     start_time_classical = time.time()
     AllChem.EmbedMolecule(mol, AllChem.ETKDG())
+    #AllChem.MMFFOptimizeMolecule(mol)
     visualize_molecule(mol, f"Classical: {mol2_filename}")
     classical_time = time.time() - start_time_classical
 

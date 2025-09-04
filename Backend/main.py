@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException, Form
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Request
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import tempfile
@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 # Import our processing functions
 from classical_processor_demo import process_classical
 from quantum_processor_demo import process_quantum
+from smiles_processor import process_smiles, generate_simple_2d_structure
 from visualization_utils_demo import create_summary_plots
 
 app = FastAPI(title="Molecular Simulation API", version="1.0.0")
@@ -36,12 +37,11 @@ results_storage = {}
 async def root():
     """Root endpoint with API information"""
     return {
-        "message": "Molecular Simulation API",
+        "message": "Molecular Simulation API", 
+        "version": "1.0.0", 
         "endpoints": {
             "upload": "/upload-and-process",
-            "classical": "/process-classical",
-            "quantum": "/process-quantum",
-            "results": "/results/{session_id}",
+            "smiles": "/process-smiles",
             "summary": "/summary/{session_id}"
         }
     }
@@ -151,6 +151,54 @@ async def get_results(session_id: str):
             "processing_times": results.get("processing_time", {})
         }
     })
+
+@app.post("/process-smiles")
+async def process_smiles_endpoint(request: Request):
+    """
+    Process SMILES string to generate and rank stereoisomers
+    """
+    try:
+        data = await request.json()
+        smiles = data.get("smiles", "").strip()
+        if not smiles:
+            raise HTTPException(status_code=400, detail="SMILES string is required")
+        
+        # Process the SMILES string
+        result = process_smiles(smiles)
+        
+        if not result["success"]:
+            raise HTTPException(status_code=400, detail=result.get("error", "Processing failed"))
+        
+        return result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@app.post("/generate-2d-structure")
+async def generate_2d_structure_endpoint(request: Request):
+    """
+    Generate 2D structure image from SMILES string
+    """
+    try:
+        data = await request.json()
+        smiles = data.get("smiles", "").strip()
+        if not smiles:
+            raise HTTPException(status_code=400, detail="SMILES string is required")
+        
+        # Generate 2D structure
+        result = generate_simple_2d_structure(smiles)
+        
+        if not result["success"]:
+            raise HTTPException(status_code=400, detail=result.get("error", "Structure generation failed"))
+        
+        return result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @app.get("/summary/{session_id}")
 async def get_summary(session_id: str):
