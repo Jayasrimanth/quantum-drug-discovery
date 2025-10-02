@@ -5,7 +5,7 @@ A full-stack application that combines quantum computing and classical methods f
 ## Project Structure
 
 ```
-Abhilaksh/
+DrugDiscovery/
 ├── Backend/                 # FastAPI backend server
 │   ├── main.py             # Main FastAPI application
 │   ├── classical_processor.py
